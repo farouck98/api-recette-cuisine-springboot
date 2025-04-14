@@ -1,0 +1,53 @@
+version: "3"
+
+services:
+  db:
+    image: mariadb:11.1
+    container_name: recette-service_database
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+    volumes:
+      - ./data:/var/lib/mysql
+    profiles: [ "database" ]
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    networks:
+      - java_microservice
+
+  recette-service:
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    container_name: recette-service_java
+    profiles: [ "java" ]
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mariadb://recette-service_database:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    networks:
+      - java_microservice
+
+  adminer:
+    image: adminer
+    container_name: recette-service_adminer
+    profiles: [ "adminer" ]
+    depends_on:
+      - db
+    restart: unless-stopped
+    ports:
+      - "8091:8080"
+    networks:
+      - java_microservice
+
+networks:
+  java_microservice:
+    driver: bridge
