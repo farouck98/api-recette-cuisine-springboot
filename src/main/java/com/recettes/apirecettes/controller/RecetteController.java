@@ -10,6 +10,7 @@ import com.recettes.apirecettes.entity.RecetteIngredient;
 import com.recettes.apirecettes.repository.RecetteIngredientRepository;
 
 import com.recettes.apirecettes.dto.RecetteCreationDTO;
+import com.recettes.apirecettes.dto.ApiReponseDTO;
 import com.recettes.apirecettes.entity.*;
 import com.recettes.apirecettes.repository.*;
 import org.springframework.http.ResponseEntity;
@@ -51,10 +52,14 @@ public class RecetteController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Recette> getById(@PathVariable Long id) {
+    public ResponseEntity<ApiReponseDTO> getById(@PathVariable Long id) {
         return service.getById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .map(recette -> ResponseEntity.ok(
+                        new ApiReponseDTO(true, "recette trouvée !", recette)
+                ))
+                .orElse(ResponseEntity.status(400).body(
+                        new ApiReponseDTO(false, "ingrédient non trouvée !", null)
+                ));
     }
 
     @PostMapping
@@ -84,11 +89,22 @@ public class RecetteController {
     }
 
     @GetMapping("/search")
-    public List<RecetteDetailDTO> searchRecettes(
+    public ResponseEntity<ApiReponseDTO> searchRecettes(
             @RequestParam(required = false) String categorie,
             @RequestParam(required = false) String ingredient
     ) {
-        return service.searchRecettes(categorie, ingredient);
+        List<RecetteDetailDTO> results = service.searchRecettes(categorie, ingredient);
+
+        if (results.isEmpty()) {
+             return ResponseEntity.ok(
+                     new ApiReponseDTO(false, "Aucune recette trouvée pour cette recherche !", null)
+             );
+        }
+
+         return ResponseEntity.ok(
+                 new ApiReponseDTO(true, "recettes trouvées avec succès", results)
+         );
+
     }
 
 

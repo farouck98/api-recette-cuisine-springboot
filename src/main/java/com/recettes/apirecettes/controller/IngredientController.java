@@ -2,6 +2,7 @@ package com.recettes.apirecettes.controller;
 
 import com.recettes.apirecettes.entity.Ingredient;
 import com.recettes.apirecettes.service.IngredientService;
+import com.recettes.apirecettes.dto.ApiReponseDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,24 +25,38 @@ public class IngredientController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Ingredient> getById(@PathVariable Long id) {
+    public ResponseEntity<ApiReponseDTO> getById(@PathVariable Long id) {
         return service.getById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .map(ingredient -> ResponseEntity.ok(
+                        new ApiReponseDTO(true, "Ingrédient trouvé !", ingredient)
+                ))
+                .orElse(ResponseEntity.status(404).body(
+                        new ApiReponseDTO(false, "Ingrédient non trouvé", null)
+                ));
     }
 
     @PostMapping
-    public Ingredient create(@RequestBody Ingredient ingredient) {
-        return service.save(ingredient);
+    public ResponseEntity<ApiReponseDTO> create(@RequestBody Ingredient ingredient) {
+        Ingredient saved = service.save(ingredient);
+        return ResponseEntity.status(201).body(
+                new ApiReponseDTO(true, "Ingredient enregistré !", saved)
+        );
     }
 
     @PutMapping("/{id}")
-    public Ingredient update(@PathVariable Long id, @RequestBody Ingredient ingredient) {
-        return service.update(id, ingredient);
+    public ResponseEntity<ApiReponseDTO> update(@PathVariable Long id, @RequestBody Ingredient ingredient) {
+        Ingredient updated = service.update(id, ingredient);
+        return ResponseEntity.ok(
+                new ApiReponseDTO(true, "Ingredient modifié avec succès", updated)
+
+        );
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public ResponseEntity<ApiReponseDTO> delete(@PathVariable Long id) {
         service.delete(id);
+        return ResponseEntity.ok(
+                new ApiReponseDTO(true, "Ingrédient supprimé avec succès", null)
+        );
     }
 }

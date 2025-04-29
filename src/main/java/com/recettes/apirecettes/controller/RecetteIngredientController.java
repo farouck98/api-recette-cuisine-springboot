@@ -1,5 +1,6 @@
 package com.recettes.apirecettes.controller;
 
+import com.recettes.apirecettes.dto.ApiReponseDTO;
 import com.recettes.apirecettes.entity.RecetteIngredient;
 import com.recettes.apirecettes.service.RecetteIngredientService;
 import org.springframework.http.ResponseEntity;
@@ -24,24 +25,38 @@ public class RecetteIngredientController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RecetteIngredient> getById(@PathVariable Long id){
+    public ResponseEntity<ApiReponseDTO> getById(@PathVariable Long id){
         return service.getById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .map(RecetteIngredient -> ResponseEntity.ok(
+                        new ApiReponseDTO(true, "Recette trouvée", RecetteIngredient)
+                ))
+                .orElse(ResponseEntity.status(404).body(
+                        new ApiReponseDTO(false, "Recette non trouvée", null)
+                ));
     }
 
     @PostMapping
-    public RecetteIngredient create(@RequestBody RecetteIngredient ri){
-        return service.save(ri);
+    public ResponseEntity<ApiReponseDTO> create(@RequestBody RecetteIngredient ri){
+        RecetteIngredient saved = service.save(ri);
+        return ResponseEntity.status(201).body(
+                new ApiReponseDTO(true, " recette (avec ses ingrédients et quantités) ajoutée", saved)
+        );
     }
 
     @PutMapping("/{id}")
-    public RecetteIngredient update(@PathVariable Long id, @RequestBody RecetteIngredient ri){
-        return service.update(id, ri);
+    public ResponseEntity<ApiReponseDTO> update(@PathVariable Long id, @RequestBody RecetteIngredient ri){
+        RecetteIngredient updated = service.update(id, ri);
+        return ResponseEntity.status(201).body(
+               new ApiReponseDTO(true, "recette modifiée avec succès", updated)
+        );
+
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id){
+    public ResponseEntity<ApiReponseDTO> delete(@PathVariable Long id){
         service.delete(id);
+        return ResponseEntity.ok(
+                new ApiReponseDTO(true, "recette supprimée avec succès", null)
+        );
     }
 }
